@@ -1,0 +1,158 @@
+package com.werd.thegame.managers;
+
+/**
+ * Created by Andrey Shamis on 30/09/17.
+ */
+
+import com.badlogic.gdx.Screen;
+import com.werd.thegame.TheGame;
+import com.werd.thegame.objects.GamePreferences;
+import com.werd.thegame.objects.PlayStage;
+import com.werd.thegame.objects.PlayStage.OnHardKeyListener;
+import com.werd.thegame.objects.XMLparse;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
+import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
+
+public class SettingsScreen implements Screen {
+    final TheGame game;
+    private static final String TAG = "TheGame-SettingsScreen";
+    private GamePreferences pref;
+    private PlayStage stage;
+    private Table table;
+    private LabelStyle labelStyle;
+    private TextButton level;
+    protected Array<String> levels;
+
+    public SettingsScreen(TheGame game_obj){
+        this.game = game_obj;
+        stage = new PlayStage(new ScreenViewport());
+        stage.addActor(game.background);
+
+        pref = new GamePreferences();
+        Skin skin = new Skin();
+        TextureAtlas buttonAtlas = new TextureAtlas(Gdx.files.internal("images/game/images.pack"));
+        skin.addRegions(buttonAtlas);
+        TextButtonStyle textButtonStyle = new TextButtonStyle();
+        textButtonStyle.font = game.levels;
+        textButtonStyle.up = skin.getDrawable("level-up");
+        textButtonStyle.down = skin.getDrawable("level-down");
+        textButtonStyle.checked = skin.getDrawable("level-up");
+
+        TextButtonStyle lockButtonStyle = new TextButtonStyle();
+        lockButtonStyle.font = game.levels;
+        lockButtonStyle.up = skin.getDrawable("level-lock");
+        lockButtonStyle.down = skin.getDrawable("level-lock");
+        lockButtonStyle.checked = skin.getDrawable("level-lock");
+
+        XMLparse parseLevels = new XMLparse();
+        levels = parseLevels.XMLparseLevels();
+
+        labelStyle = new LabelStyle();
+        labelStyle.font = game.levels;
+        table = new Table();
+        table.row().pad(20);
+        table.center();
+        table.setFillParent(true);
+
+        for (int i = 0; i < levels.size; i++) {
+            final String cur_level = levels.get(i);
+            final String next_level;
+            if (i + 1 < levels.size) {
+                next_level = levels.get(i + 1);
+            } else {
+                next_level = "null";
+            }
+            level = new TextButton(cur_level, textButtonStyle);
+            if (pref.getLevel(cur_level)) {
+                level = new TextButton(cur_level, textButtonStyle);
+            } else {
+                level = new TextButton("", lockButtonStyle);
+                level.setTouchable(Touchable.disabled);
+            }
+
+            level.addListener(new ClickListener() {
+                @Override
+                public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                    Gdx.input.vibrate(3);
+                    return true;
+                };
+                @Override
+                public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+                    //game.setScreen(new PlayScreen(game, cur_level, next_level));
+                    Gdx.app.log(TAG, "------------------- Settings screen CLICK Level ");
+                    dispose();
+                };
+            });
+            table.add(level);
+            float indexLevel = Float.parseFloat(String.valueOf(i)) + 1;
+            if (indexLevel % 5.0f == 0) table.row().padLeft(20).padRight(20).padBottom(20);
+        }
+        stage.addActor(table);
+
+        Gdx.input.setInputProcessor(stage);
+        Gdx.input.setCatchBackKey(true);
+        stage.setHardKeyListener(new OnHardKeyListener() {
+            @Override
+            public void onHardKey(int keyCode, int state) {
+                if(keyCode==Keys.BACK && state==1){
+                    game.setScreen(new MainMenuScreen(game));
+                }
+            }
+        });
+    }
+
+    @Override
+    public void show() {
+
+    }
+
+    @Override
+    public void render(float delta) {
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        stage.act(delta);
+        stage.draw();
+    }
+
+    @Override
+    public void resize(int width, int height) {
+
+    }
+
+    @Override
+    public void pause() {
+
+    }
+
+    @Override
+    public void resume() {
+
+    }
+
+    @Override
+    public void hide() {
+
+    }
+
+    @Override
+    public void dispose() {
+        stage.dispose();
+        game.dispose();
+    }
+}
